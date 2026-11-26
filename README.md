@@ -4,6 +4,8 @@
 
 https://endearing-gaufre-d98692.netlify.app/
 
+A standalone, offline-first communication simulator combining professional interview practice, social interaction scenarios, bilingual conversational guidance, character-based feedback, and gamified logical challenges.
+
 **যোগাযোগ (Jogajog)** is a zero-dependency, offline-first, single-file interactive web application designed to help users master high-stakes corporate interviews, logical brainteasers, professional attitude, stand-up humor, and formal/informal social banter.
 
 Built inside a single `index.html` file with persistent `localStorage` state, it requires no backend server, API keys, or internet connection after download.

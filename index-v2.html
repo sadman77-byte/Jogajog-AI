@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>যোগাযোগ (Jogajog) v2 — ইন্টারভিউ, ধাঁধা, ফ্লার্ট ও কমিউনিকেশন সিমুলেটর</title>
+  <style>
+    :root {
+      --bg-dark: #0b0f17;
+      --bg-panel: #141a24;
+      --bg-card: #1c2433;
+      --bg-card-hover: #253044;
+      --accent-blue: #4f8cff;
+      --accent-purple: #8b5cf6;
+      --accent-pink: #ec4899;
+      --accent-green: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border: #2a3447;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    body { background: var(--bg-dark); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* Top Navigation Bar */
+    header {
+      background: rgba(20, 26, 36, 0.96);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-logo {
+      width: 40px; height: 40px; border-radius: 11px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 20px; color: #fff;
+    }
+    .brand h1 { font-size: 1.25rem; font-weight: 700; }
+    .brand span { font-size: 0.76rem; color: var(--text-muted); display: block; }
+
+    .nav-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .nav-btn {
+      background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border);
+      padding: 8px 15px; border-radius: 20px; cursor: pointer; font-size: 0.86rem; font-weight: 600;
+      transition: all 0.2s;
+    }
+    .nav-btn.active, .nav-btn:hover { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+
+    .hud-stats { display: flex; align-items: center; gap: 10px; }
+    .coin-badge {
+      background: rgba(245, 158, 11, 0.16); border: 1px solid rgba(245, 158, 11, 0.45);
+      color: #fbbf24; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.92rem;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .streak-badge {
+      background: rgba(139, 92, 246, 0.16); border: 1px solid rgba(139, 92, 246, 0.45);
+      color: #c4b5fd; padding: 6px 12px; border-radius: 20px; font-weight: 700; font-size: 0.82rem;
+    }
+    .offline-pill {
+      background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399; padding: 5px 10px; border-radius: 14px; font-size: 0.76rem; font-weight: 600;
+    }
+
+    main { flex: 1; max-width: 1300px; width: 100%; margin: 0 auto; padding: 20px; }
+    .view-section { display: none; animation: fadeIn 0.25s ease; }
+    .view-section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Funnel & Skill Dashboard */
+    .funnel-card {
+      background: linear-gradient(135deg, #1a2234, #241b35);
+      border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 20px;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
+    }
+    .stats-row { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; }
+    .stat-pill {
+      background: rgba(15, 19, 26, 0.65); border: 1px solid var(--border); padding: 6px 12px;
+      border-radius: 10px; font-size: 0.8rem; color: #cbd5e1;
+    }
+    .progress-wrap { width: 100%; background: #0b0f17; height: 8px; border-radius: 6px; overflow: hidden; margin-top: 10px; }
+    .progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent-blue), var(--accent-pink)); transition: width 0.4s; }
+
+    /* Filter Chips & Phrase Cards */
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .chip {
+      padding: 6px 14px; border-radius: 16px; background: var(--bg-panel); border: 1px solid var(--border);
+      color: var(--text-muted); cursor: pointer; font-size: 0.84rem; font-weight: 600;
+    }
+    .chip.active { background: var(--accent-purple); color: #fff; border-color: var(--accent-purple); }
+
+    .phrase-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(315px, 1fr)); gap: 14px; }
+    .phrase-card {
+      background: var(--bg-panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px;
+      display: flex; flex-direction: column; justify-content: space-between; gap: 10px;
+    }
+    .phrase-tag {
+      display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 10px;
+      width: fit-content;
+    }
+    .tag-corp { background: rgba(79, 140, 255, 0.2); color: #93c5fd; }
+    .tag-att { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+    .tag-flirt-f { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; }
+    .tag-flirt-i { background: rgba(236, 72, 153, 0.2); color: #f9a8d4; }
+    .tag-humor { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+
+    .phrase-en { font-size: 0.98rem; font-weight: 600; line-height: 1.45; color: #fff; }
+    .phrase-bn { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
+    .phrase-tip { font-size: 0.79rem; color: #fbbf24; background: rgba(245,158,11,0.08); padding: 6px 10px; border-radius: 8px; }
+    .btn-use {
+      background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border);
+      padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.84rem;
+      transition: 0.2s;
+    }
+    .btn-use:hover { background: var(--accent-blue); border-color: var(--accent-blue); }
+
+    /* 100 Characters Roster */
+    .char-controls { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .search-input {
+      flex: 1; min-width: 220px; background: var(--bg-panel); border: 1px solid var(--border);
+      color: #fff; padding: 10px 14px; border-radius: 10px; font-size: 0.9rem;
+    }
+    .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; max-height: 68vh; overflow-y: auto; padding-right: 4px; }
+    .char-card {
+      background: var(--bg-panel); border: 1px solid var(--border); border-radius: 14px; padding: 14px;
+      cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; gap: 8px;
+    }
+    .char-card:hover { transform: translateY(-2px); border-color: var(--accent-blue); background: var(--bg-card); }
+    .char-top { display: flex; align-items: center; gap: 10px; }
+    .char-avatar-mini {
+      width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; flex-shrink: 0;
+    }
+    .char-name { font-weight: 700; font-size: 0.95rem; }
+    .char-role { font-size: 0.78rem; color: var(--text-muted); }
+
+    /* Google Meet Style Simulation Room */
+    .meet-layout { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; }
+    @media (max-width: 920px) { .meet-layout { grid-template-columns: 1fr; } }
+
+    .video-stage {
+      background: #10151f; border: 1px solid var(--border); border-radius: 18px; padding: 20px;
+      display: flex; flex-direction: column; justify-content: space-between; min-height: 500px; position: relative;
+      overflow: hidden;
+    }
+    .stage-topbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .rec-badge { background: rgba(239, 68, 68, 0.2); color: #fca5a5; padding: 4px 10px; border-radius: 12px; font-size: 0.76rem; font-weight: 700; }
+
+    /* Visual Expression Avatar */
+    .avatar-stage-center {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+      margin: 14px 0;
+    }
+    .avatar-ring {
+      width: 150px; height: 150px; border-radius: 50%; padding: 6px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      transition: all 0.35s ease; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 35px rgba(79, 140, 255, 0.25);
+    }
+    .avatar-ring.impressed { background: linear-gradient(135deg, #10b981, #3b82f6); box-shadow: 0 0 45px rgba(16, 185, 129, 0.55); transform: scale(1.06); }
+    .avatar-ring.blushing { background: linear-gradient(135deg, #ec4899, #f43f5e); box-shadow: 0 0 45px rgba(236, 72, 153, 0.55); transform: scale(1.06); }
+    .avatar-ring.laughing { background: linear-gradient(135deg, #f59e0b, #ec4899); box-shadow: 0 0 45px rgba(245, 158, 11, 0.55); transform: scale(1.05); }
+    .avatar-ring.skeptical { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 0 35px rgba(245, 158, 11, 0.4); }
+    .avatar-ring.annoyed { background: linear-gradient(135deg, #ef4444, #991b1b); box-shadow: 0 0 40px rgba(239, 68, 68, 0.55); transform: scale(0.96); }
+
+    .avatar-face {
+      width: 100%; height: 100%; border-radius: 50%; background: #1a2130;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .expression-emoji { font-size: 4rem; transition: transform 0.3s; }
+    .expression-label {
+      background: rgba(11, 15, 23, 0.9); border: 1px solid var(--border);
+      padding: 5px 14px; border-radius: 14px; font-size: 0.82rem; font-weight: 600; color: #e2e8f0;
+    }
+
+    /* Active Riddle Box inside Stage */
+    .riddle-banner {
+      background: rgba(245, 158, 11, 0.12); border: 1px dashed rgba(245, 158, 11, 0.55);
+      border-radius: 12px; padding: 10px 14px; width: 100%; max-width: 460px; display: none;
+    }
+    .riddle-banner.active { display: block; }
+    .riddle-title { font-size: 0.76rem; font-weight: 700; color: #fbbf24; margin-bottom: 4px; display: flex; justify-content: space-between; }
+    .riddle-q { font-size: 0.85rem; color: #fef3c7; line-height: 1.4; }
+
+    .impression-meter-box { width: 100%; max-width: 400px; }
+    .meter-labels { display: flex; justify-content: space-between; font-size: 0.79rem; color: var(--text-muted); margin-bottom: 4px; }
+
+    /* Meet Bottom Controls */
+    .meet-controls {
+      display: flex; justify-content: center; gap: 10px; padding-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap;
+    }
+    .ctrl-btn {
+      height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid var(--border);
+      background: var(--bg-card); color: #fff; display: flex; align-items: center; gap: 6px;
+      cursor: pointer; font-size: 0.82rem; font-weight: 600; transition: 0.2s;
+    }
+    .ctrl-btn:hover { background: var(--accent-blue); border-color: var(--accent-blue); }
+    .ctrl-riddle { background: rgba(245, 158, 11, 0.18); border-color: rgba(245, 158, 11, 0.5); color: #fcd34d; }
+    .ctrl-riddle:hover { background: var(--accent-amber); color: #000; }
+    .ctrl-end { background: var(--accent-red); border-color: var(--accent-red); }
+
+    /* Chat & Quick Choice Panel */
+    .chat-panel {
+      background: var(--bg-panel); border: 1px solid var(--border); border-radius: 18px;
+      display: flex; flex-direction: column; height: 550px; overflow: hidden;
+    }
+    .chat-header { padding: 13px 16px; border-bottom: 1px solid var(--border); font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+    .chat-messages { flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+    .msg { max-width: 88%; padding: 10px 14px; border-radius: 14px; font-size: 0.89rem; line-height: 1.45; }
+    .msg-ai { background: var(--bg-card); align-self: flex-start; border-bottom-left-radius: 4px; }
+    .msg-riddle { background: rgba(245, 158, 11, 0.14); border: 1px solid rgba(245, 158, 11, 0.4); align-self: flex-start; }
+    .msg-user { background: var(--accent-blue); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .msg-meta { font-size: 0.72rem; opacity: 0.85; margin-top: 5px; display: block; }
+
+    .quick-replies { padding: 9px 12px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; background: #111620; }
+    .quick-btn {
+      text-align: left; background: var(--bg-card); border: 1px solid var(--border); color: #e2e8f0;
+      padding: 7px 10px; border-radius: 8px; font-size: 0.79rem; cursor: pointer; transition: 0.15s;
+    }
+    .quick-btn:hover { border-color: var(--accent-purple); background: #262f42; }
+
+    .chat-input-row { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); background: var(--bg-panel); }
+    .chat-input-row input {
+      flex: 1; background: var(--bg-dark); border: 1px solid var(--border); color: #fff;
+      padding: 10px 12px; border-radius: 10px; font-size: 0.9rem;
+    }
+    .send-btn {
+      background: var(--accent-green); color: #052e16; font-weight: 700; border: none;
+      padding: 0 16px; border-radius: 10px; cursor: pointer;
+    }
+
+    /* Floating Coin Toast */
+    .coin-toast {
+      position: fixed; bottom: 24px; right: 24px; padding: 12px 18px; border-radius: 12px;
+      font-weight: 700; font-size: 0.94rem; z-index: 100; display: none;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.45);
+    }
+    .toast-plus { background: #065f46; color: #6ee7b7; border: 1px solid #10b981; }
+    .toast-minus { background: #7f1d1d; color: #fca5a5; border: 1px solid #ef4444; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-logo">যো</div>
+    <div>
+      <h1>যোগাযোগ (Jogajog)</h1>
+      <span>ইন্টারভিউ, ধাঁধা, ফ্লার্ট ও প্রোফেশনাল এটিচিউড সিমুলেটর</span>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="nav-btn active" onclick="switchTab('academy', this)">১. ফ্রেজ ও এটিচিউড</button>
+    <button class="nav-btn" onclick="switchTab('characters', this)">২. ১০০ ক্যারেক্টার</button>
+    <button class="nav-btn" onclick="switchTab('meet', this)">৩. লাইভ মিট, ধাঁধা ও গেম</button>
+  </div>
+
+  <div class="hud-stats">
+    <span class="offline-pill">● অফলাইন মোড</span>
+    <span class="streak-badge">🔥 স্ট্রিক: <span id="streakCount">0</span></span>
+    <div class="coin-badge">🪙 <span id="coinCount">150</span> কয়েন</div>
+  </div>
+</header>
+
+<main>
+  <!-- TAB 1: PHRASE & ATTITUDE ACADEMY -->
+  <section id="tab-academy" class="view-section active">
+    <div class="funnel-card">
+      <div style="flex:1; min-width:280px;">
+        <h2 style="font-size:1.15rem; margin-bottom:4px;">কমিউনিকেশন, প্রোফেশনাল এটিচিউড ও ধাঁধা মাস্টারি</h2>
+        <p style="font-size:0.86rem; color:var(--text-muted);">
+          কর্পোরেট ফ্রেজ, প্রোফেশনাল এটিচিউড, ফরমাল/ইনফরমাল ফ্লার্টিং ও স্ট্যান্ড-আপ হিউমার শিখুন। ইন্টারভিউ বোর্ডে মাঝেমধ্যে হঠাৎ ধাঁধা আসবে—সঠিক যুক্তি দিলে বোনাস কয়েন পাবেন!
+        </p>
+        <div class="stats-row">
+          <span class="stat-pill">🧩 ধাঁধা সমাধান: <strong id="riddlesSolvedStat">0</strong></span>
+          <span class="stat-pill">💼 প্রোফেশনাল স্কোর: <strong id="profStat">0</strong></span>
+          <span class="stat-pill">💖 চার্ম/হিউমার স্কোর: <strong id="charmStat">0</strong></span>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar" id="masteryBar" style="width: 30%;"></div>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="nav-btn active" onclick="switchTab('characters', document.querySelectorAll('.nav-btn')[1])">১০০ ক্যারেক্টার দেখুন →</button>
+        <button class="nav-btn" onclick="resetProgress()">রিসেট করুন</button>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <button class="chip active" onclick="filterPhrases('all', this)">সব ক্যাটাগরি</button>
+      <button class="chip" onclick="filterPhrases('corp', this)">কর্পোরেট ইন্টারভিউ</button>
+      <button class="chip" onclick="filterPhrases('att', this)">প্রোফেশনাল এটিচিউড</button>
+      <button class="chip" onclick="filterPhrases('flirt-f', this)">ফরমাল ফ্লার্ট</button>
+      <button class="chip" onclick="filterPhrases('flirt-i', this)">ইনফরমাল ফ্লার্ট</button>
+      <button class="chip" onclick="filterPhrases('humor', this)">উইট ও মজা করা</button>
+    </div>
+
+    <div class="phrase-grid" id="phraseGrid"></div>
+  </section>
+
+  <!-- TAB 2: 100 CHARACTERS ROSTER -->
+  <section id="tab-characters" class="view-section">
+    <div class="char-controls">
+      <input type="text" id="charSearch" class="search-input" placeholder="১০০ ক্যারেক্টারের নাম বা রোল খুঁজুন (যেমন: Google, HR, Cafe, Musician)..." oninput="renderCharacters()" />
+      <select id="charModeFilter" class="search-input" style="max-width:240px;" onchange="renderCharacters()">
+        <option value="all">সব ক্যারেক্টার (১০০ জন)</option>
+        <option value="interview">কর্পোরেট ইন্টারভিউ ও ধাঁধা বোর্ড (৫০)</option>
+        <option value="flirt">ফ্লার্ট, হিউমার ও সোশ্যাল গেম (৫০)</option>
+      </select>
+    </div>
+    <div class="char-grid" id="charGrid"></div>
+  </section>
+
+  <!-- TAB 3: GOOGLE MEET STYLE SIMULATION & RIDDLE/FLIRT GAME -->
+  <section id="tab-meet" class="view-section">
+    <div class="meet-layout">
+      <!-- Left: Visual Video & Expression Stage -->
+      <div class="video-stage">
+        <div class="stage-topbar">
+          <div>
+            <strong id="activeCharName">আরিয়ানা রহমান</strong>
+            <span id="activeCharRole" style="font-size:0.8rem; color:var(--text-muted); display:block;">VP of Product • Corporate Interview Board</span>
+          </div>
+          <span class="rec-badge" id="modeBadge">● INTERVIEW BOARD</span>
+        </div>
+
+        <div class="avatar-stage-center">
+          <div class="avatar-ring" id="avatarRing">
+            <div class="avatar-face">
+              <div class="expression-emoji" id="expressionEmoji">🙂</div>
+            </div>
+          </div>
+          <div class="expression-label" id="expressionText">এক্সপ্রেশন: মনোযোগী ও শান্ত (Neutral)</div>
+
+          <!-- Live Riddle Box -->
+          <div class="riddle-banner" id="riddleBanner">
+            <div class="riddle-title">
+              <span>🧩 সারপ্রাইজ ইন্টারভিউ ধাঁধা (বোনাস +৩০ কয়েন)</span>
+              <span style="cursor:pointer; text-decoration:underline;" onclick="showRiddleHint()">হিন্ট নিন</span>
+            </div>
+            <div class="riddle-q" id="riddleQuestionText"></div>
+          </div>
+
+          <div class="impression-meter-box">
+            <div class="meter-labels">
+              <span>ইমপ্রেশন ও বডি ল্যাঙ্গুয়েজ মিটার</span>
+              <span id="impressionScoreText">50%</span>
+            </div>
+            <div class="progress-wrap">
+              <div class="progress-bar" id="impressionBar" style="width: 50%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="meet-controls">
+          <button class="ctrl-btn" onclick="toggleMic(this)">🎙️ মাইক</button>
+          <button class="ctrl-btn ctrl-riddle" onclick="triggerRiddle(true)">🧩 ধাঁধা দিন</button>
+          <button class="ctrl-btn" onclick="sendJokeSpark()">😄 মজা করুন</button>
+          <button class="ctrl-btn" onclick="sendPostureBonus()">👔 এটিচিউড</button>
+          <button class="ctrl-btn" onclick="nextCharacter()">🔄 পরের জন</button>
+          <button class="ctrl-btn ctrl-end" onclick="switchTab('characters', document.querySelectorAll('.nav-btn')[1])">ত্যাগ</button>
+        </div>
+      </div>
+
+      <!-- Right: Dialogue & Smart Phrase Injector -->
+      <div class="chat-panel">
+        <div class="chat-header">
+          <span>লাইভ বোর্ড ও কথোপকথন</span>
+          <span style="font-size:0.76rem; color:var(--text-muted);" id="charPrefTag">পছন্দ: Structured & Sharp</span>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+
+        <div class="quick-replies" id="quickReplies"></div>
+
+        <div class="chat-input-row">
+          <input type="text" id="userInput" placeholder="উত্তর, ধাঁধার সমাধান বা ফ্লার্ট ফ্রেজ লিখুন..." onkeydown="if(event.key==='Enter') sendMessage()" />
+          <button class="send-btn" onclick="sendMessage()">পাঠান</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="coin-toast" id="coinToast"></div>
+
+<script>
+  // --- OFFLINE PERSISTENT STATE ---
+  let coins = parseInt(localStorage.getItem('jogajog_coins') || '150', 10);
+  let riddlesSolved = parseInt(localStorage.getItem('jogajog_riddles') || '0', 10);
+  let profScore = parseInt(localStorage.getItem('jogajog_prof') || '0', 10);
+  let charmScore = parseInt(localStorage.getItem('jogajog_charm') || '0', 10);
+  let streak = 0;
+  let impression = 50;
+  let turnCount = 0;
+  let currentCharacter = null;
+  let activeRiddle = null;
+
+  function saveAndRenderHUD(delta = 0, reason = '') {
+    coins = Math.max(0, coins + delta);
+    localStorage.setItem('jogajog_coins', coins);
+    localStorage.setItem('jogajog_riddles', riddlesSolved);
+    localStorage.setItem('jogajog_prof', profScore);
+    localStorage.setItem('jogajog_charm', charmScore);
+
+    document.getElementById('coinCount').innerText = coins;
+    document.getElementById('streakCount').innerText = streak;
+    document.getElementById('riddlesSolvedStat').innerText = riddlesSolved;
+    document.getElementById('profStat').innerText = profScore;
+    document.getElementById('charmStat').innerText = charmScore;
+
+    const mastery = Math.min(100, Math.round(((coins + riddlesSolved * 20) / 500) * 100));
+    document.getElementById('masteryBar').style.width = mastery + '%';
+
+    if (delta !== 0) {
+      const toast = document.getElementById('coinToast');
+      toast.className = 'coin-toast ' + (delta > 0 ? 'toast-plus' : 'toast-minus');
+      toast.innerText = (delta > 0 ? `+${delta} কয়েন! ` : `${delta} কয়েন! `) + reason;
+      toast.style.display = 'block';
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 2800);
+    }
+  }
+
+  function resetProgress() {
+    coins = 150; riddlesSolved = 0; profScore = 0; charmScore = 0; streak = 0;
+    saveAndRenderHUD(0);
+    showToastManual('সব স্কোর ও কয়েন ১৫০-এ রিসেট হয়েছে।', true);
+  }
+
+  function showToastManual(msg, good) {
+    const toast = document.getElementById('coinToast');
+    toast.className = 'coin-toast ' + (good ? 'toast-plus' : 'toast-minus');
+    toast.innerText = msg;
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 2600);
+  }
+
+  // --- INTERVIEW RIDDLES & LOGIC PUZZLES (From Uploaded GCC & Google Books) ---
+  const interviewRiddles = [
+    {
+      id: 1,
+      q: "বাইরে ৩টি সুইচ আছে, ভেতরের বন্ধ ঘরে ৩টি বাল্ব। আপনি শুধু একবার ঘরে ঢুকতে পারবেন। কীভাবে বুঝবেন কোন সুইচ কোন বাল্বের?",
+      keywords: ["heat", "warm", "hot", "touch", "গরম", "তাপ", "স্পর্শ", "প্রথম", "কিছুক্ষণ"],
+      hint: "বাল্ব জ্বললে আলো ছাড়াও আরেকটি জিনিস তৈরি হয়—সেটি হাতে অনুভব করা যায়!",
+      solution: "১ম সুইচ ৫ মিনিট জ্বালিয়ে বন্ধ করুন, ২য় সুইচ চালু রেখে ঘরে ঢুকুন। যেটি জ্বলছে তা ২য়, যেটি গরম তা ১ম, আর যেটি ঠান্ডা ও বন্ধ তা ৩য় সুইচ।"
+    },
+    {
+      id: 2,
+      q: "দুটি অসম দড়ির প্রতিটি পুরোপুরি পুড়তে ঠিক ৬০ মিনিট নেয় (সমান হারে পোড়ে না)। এই দুটি দড়ি দিয়ে ঠিক ৪৫ মিনিট কীভাবে মাপবেন?",
+      keywords: ["both ends", "two ends", "দুই মাথা", "দুপাশ", "উভয় প্রান্ত", "৩০", "30"],
+      hint: "একটি দড়ির দুই মাথায় একসাথে আগুন দিলে সেটি কত মিনিটে পুড়বে?",
+      solution: "১ম দড়ির দুই মাথায় ও ২য় দড়ির এক মাথায় একসাথে আগুন দিন। ১ম দড়ি ৩০ মিনিটে পুড়ে শেষ হলে ২য় দড়ির অন্য মাথায় আগুন দিন—বাকি অংশ ১৫ মিনিটে পুড়বে (৩০+১৫ = ৪৫ মিনিট)।"
+    },
+    {
+      id: 3,
+      q: "রাস্তার ম্যানহোলের ঢাকনা (Manhole cover) চারকোনা না হয়ে সবসময় গোলাকার (Round) হয় কেন?",
+      keywords: ["fall", "slip", "diagonal", "diameter", "পড়ে", "গর্ত", "ব্যাস", "কর্ণ", "ভেতরে"],
+      hint: "চারকোনা ঢাকনা কোনাকুনি ঘুরালে কী হতে পারে?",
+      solution: "গোলাকার ঢাকনার ব্যাস সবদিকে সমান, তাই এটি কোনোভাবেই ঘুরিয়ে ম্যানহোলের গর্তের ভেতরে পড়ে যেতে পারে না।"
+    },
+    {
+      id: 4,
+      q: "ঘড়িতে ঠিক ৩টা ১৫ (3:15) বাজলে ঘণ্টার কাঁটা ও মিনিটের কাঁটার মধ্যে কত ডিগ্রি কোণ তৈরি হয়?",
+      keywords: ["7.5", "৭.৫", "সাড়ে সাত", "seven and a half"],
+      hint: "মিনিটের কাঁটা ৩-এ থাকলেও ঘণ্টার কাঁটা কি ঠিক ৩-এ স্থির থাকবে?",
+      solution: "০ ডিগ্রি নয়! ১৫ মিনিটে ঘণ্টার কাঁটা ৩ থেকে এক-চতুর্থাংশ এগিয়ে যায় (৩০° ÷ ৪ = ৭.৫ ডিগ্রি)।"
+    },
+    {
+      id: 5,
+      q: "২৫টি ঘোড়া আছে, একটি ট্র্যাকে একসাথে সর্বোচ্চ ৫টি ঘোড়া দৌড়াতে পারে। ঘড়ি ছাড়া সবচেয়ে দ্রুততম ৩টি ঘোড়া বের করতে কমপক্ষে কয়টি রেস লাগবে?",
+      keywords: ["7", "৭", "সাত"],
+      hint: "প্রথমে ৫টি গ্রুপে ৫টি রেস, এরপর বিজয়ীদের নিয়ে ১টি রেস—তারপর কয়টি ঘোড়ার ফাইনাল লাগবে?",
+      solution: "কমপক্ষে ৭টি রেস লাগবে (৫টি গ্রুপ রেস + ১টি বিজয়ীদের রেস + শীর্ষ প্রার্থীদের নিয়ে ১টি চূড়ান্ত রেস)।"
+    },
+    {
+      id: 6,
+      q: "একটি ঝুঁড়িতে ৫টি আপেল আছে এবং ৫ জন মানুষ আছে। প্রত্যেককে ১টি করে আপেল দেওয়ার পরও ঝুঁড়িতে ১টি আপেল কীভাবে থেকে যাবে?",
+      keywords: ["basket", "ঝুঁড়ি", "সহ", "সাথে"],
+      hint: "শেষ মানুষটিকে আপেলটি কীভাবে দেবেন?",
+      solution: "৪ জনকে ১টি করে আপেল দেওয়ার পর ৫ম জনকে আপেলটি ঝুঁড়িসহ দিয়ে দিন!"
+    }
+  ];
+
+  // --- PHRASES, PROFESSIONAL ATTITUDE, FLIRTING & HUMOR ---
+  const phrases = [
+    {
+      cat: 'corp', tag: 'কর্পোরেট ইন্টারভিউ', tagClass: 'tag-corp',
+      en: "That’s a nuanced question—let me break it down into two parts before diving in.",
+      bn: "বিষয়টি বেশ সূক্ষ্ম—ভেতরে যাওয়ার আগে আমি এটিকে দুটি ভাগে ভাগ করে নিচ্ছি।",
+      tip: "জটিল প্রশ্নে তাড়াহুড়ো না করে কাঠামোবদ্ধ চিন্তা দেখাতে এটি দারুণ কাজ করে।"
+    },
+    {
+      cat: 'corp', tag: 'কর্পোরেট ইন্টারভিউ', tagClass: 'tag-corp',
+      en: "Since exact numbers aren't given, I’ll start with a clear baseline assumption and test sensitivity.",
+      bn: "যেহেতু নির্দিষ্ট সংখ্যা দেওয়া নেই, আমি একটি স্পষ্ট ভিত্তি অনুমান দিয়ে শুরু করছি।",
+      tip: "গুগল বা অ্যানালিটিক্স ইন্টারভিউয়ের অনুমানভিত্তিক (Fermi) প্রশ্নে ব্যবহৃত হয়।"
+    },
+    {
+      cat: 'att', tag: 'প্রোফেশনাল এটিচিউড', tagClass: 'tag-att',
+      en: "I take full ownership of the outcome—if an assumption fails, I flag it early with a recovery plan.",
+      bn: "আমি ফলাফলের পুরো দায়িত্ব নিই—কোনো অনুমান কাজ না করলে সমাধানের পরিকল্পনাসহ আগেই জানাই।",
+      tip: "অজুহাত না দিয়ে দায়িত্বশীল ও প্রো-অ্যাক্টিভ কর্পোরেট এটিচিউড প্রকাশ করে।"
+    },
+    {
+      cat: 'att', tag: 'প্রোফেশনাল এটিচিউড', tagClass: 'tag-att',
+      en: "Let’s disagree on the approach without making it personal—our shared goal is shipping the best product.",
+      bn: "পদ্ধতি নিয়ে ভিন্নমত থাকতেই পারে, তবে ব্যক্তিগত না নিয়ে আমাদের লক্ষ্য হোক সেরা কাজটি ডেলিভার করা।",
+      tip: "চাপের মুখে শান্ত, পরিপক্ব এবং টিম-ফার্স্ট মনোভাব ফুটিয়ে তোলে।"
+    },
+    {
+      cat: 'att', tag: 'প্রোফেশনাল এটিচিউড', tagClass: 'tag-att',
+      en: "I prefer listening twice before speaking once in cross-cultural rooms so no context gets lost.",
+      bn: "ভিন্ন সংস্কৃতির টিমে একবার বলার আগে দুবার শোনায় আমি বিশ্বাসী, যাতে কোনো সূক্ষ্ম অর্থ হারিয়ে না যায়।",
+      tip: "Cross-cultural pragmatic awareness এবং শ্রদ্ধাবোধের পরিচয় দেয়।"
+    },
+    {
+      cat: 'flirt-f', tag: 'ফরমাল ফ্লার্ট', tagClass: 'tag-flirt-f',
+      en: "You have a really calm way of cutting through noise—it’s genuinely refreshing to talk to you.",
+      bn: "কোলাহল কাটিয়ে সহজভাবে কথা বলার দারুণ একটি ধরন আপনার আছে—কথা বলা সত্যিই সতেজ লাগে।",
+      tip: "অফিস বা নেটওয়ার্কিং পরিবেশে শালীন ও প্রশংসাসূচক ইমপ্রেশন তৈরি করে।"
+    },
+    {
+      cat: 'flirt-f', tag: 'ফরমাল ফ্লার্ট', tagClass: 'tag-flirt-f',
+      en: "Careful—if you keep making sharp observations like that, I might start looking forward to meetings.",
+      bn: "সাবধান—এভাবে তীক্ষ্ণ পর্যবেক্ষণ দিতে থাকলে আমি হয়তো মিটিংয়ের জন্য অপেক্ষা করতে শুরু করব।",
+      tip: "হালকা রসবোধ ও পেশাদার সীমারেখা বজায় রেখে আকর্ষণ প্রকাশ করে।"
+    },
+    {
+      cat: 'flirt-i', tag: 'ইনফরমাল ফ্লার্ট', tagClass: 'tag-flirt-i',
+      en: "Okay, I admit it—you’re way more entertaining than the plans I originally had tonight.",
+      bn: "ঠিক আছে, মানছি—আজ রাতে আমার আসল প্ল্যানের চেয়ে তুমি অনেক বেশি মজার।",
+      tip: "ক্যাজুয়াল আড্ডা বা ডেটে স্বতঃস্ফূর্ত ও প্রাণবন্ত ভাইব তৈরি করে।"
+    },
+    {
+      cat: 'flirt-i', tag: 'ইনফরমাল ফ্লার্ট', tagClass: 'tag-flirt-i',
+      en: "You can’t just drop a smile like that and expect me to stay focused.",
+      bn: "তুমি এভাবে একটা হাসি দিয়ে চলে যাবে আর আমি মনোযোগ ধরে রাখব, তা তো হয় না।",
+      tip: "পরিচিত সার্কেলে প্লেফুল খুনসুটির জন্য কার্যকর।"
+    },
+    {
+      cat: 'humor', tag: 'উইট ও মজা করা', tagClass: 'tag-humor',
+      en: "I promise my logic works faster than my coffee kicks in—though a second cup never hurts.",
+      bn: "কথা দিচ্ছি কফি কাজ করার আগেই আমার লজিক চালু হয়ে যায়—তবে দ্বিতীয় কাপ কফিতে আপত্তি নেই!",
+      tip: "স্ট্যান্ড-আপ কমেডির সেলফ-ডিপ্রিকেটিং হিউমার ব্যবহার করে বরফ গলানো (Ice-breaker)।"
+    },
+    {
+      cat: 'humor', tag: 'উইট ও মজা করা', tagClass: 'tag-humor',
+      en: "If solving this puzzle gets me hired, wait until you see how I organize messy spreadsheets.",
+      bn: "এই ধাঁধা সমাধান করলে যদি চাকরি হয়, তবে এলোমেলো স্প্রেডশিট গোছানো দেখলে তো অবাকই হবেন!",
+      tip: "আত্মবিশ্বাসের সাথে হালকা রসবোধ মিশিয়ে ইন্টারভিউয়ারকে হাসানো।"
+    }
+  ];
+
+  function renderPhrases(filter = 'all') {
+    const grid = document.getElementById('phraseGrid');
+    grid.innerHTML = '';
+    phrases.filter(p => filter === 'all' || p.cat === filter).forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'phrase-card';
+      card.innerHTML = `
+        <div>
+          <span class="phrase-tag ${p.tagClass}">${p.tag}</span>
+          <p class="phrase-en" style="margin-top:8px;">"${p.en}"</p>
+          <p class="phrase-bn" style="margin-top:6px;">${p.bn}</p>
+        </div>
+        <div>
+          <div class="phrase-tip">💡 ${p.tip}</div>
+          <button class="btn-use" style="width:100%; margin-top:8px;" onclick="usePhraseInMeet(\`${p.en.replace(/`/g, '')}\`)">মিট বোর্ডে এটি বলুন →</button>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  function filterPhrases(cat, btn) {
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    renderPhrases(cat);
+  }
+
+  function usePhraseInMeet(text) {
+    switchTab('meet', document.querySelectorAll('.nav-btn')[2]);
+    document.getElementById('userInput').value = text;
+    sendMessage();
+  }
+
+  // --- 100 CHARACTERS GENERATOR ---
+  const firstNames = [
+    "আরিয়ানা", "রাফি", "তাসনিম", "ফারহান", "নুসরাত", "সাদিক", "মেহরিন", "তানভীর", "জারা", "ইমরান",
+    "সাবিহা", "নাফিস", "মালিহা", "শাওন", "রাইসা", "কবির", "সুমাইয়া", "আদনান", "লামইয়া", "জায়িদ",
+    "এলিনা", "সোফিয়া", "লিয়াম", "মায়া", "ইথান", "ক্লোয়ি", "নোয়া", "হান্না", "ড্যানিয়েল", "কাইরা",
+    "মিনা", "হিরোশি", "সিউন", "লুকাস", "আমেলি", "ওমর", "লাইলা", "তারিক", "নাদিয়া", "রাহুল",
+    "অনন্যা", "বিক্রম", "শ্রেয়া", "অর্জুন", "দিয়া", "কেনজি", "ইউনা", "মার্কাস", "ইসাবেলা", "লিও"
+  ];
+  const lastNames = ["রহমান", "আহমেদ", "চৌধুরী", "খান", "হাসান", "চেন", "পার্ক", "মিলার", "সেন", "মালিক"];
+
+  const corpRoles = [
+    { role: "VP of Product", pref: "Structured & Strategic", prompt: "Suppose two key stakeholders want opposite features right before launch. How do you align them?" },
+    { role: "Google Hiring Lead", pref: "Googleyness & Riddles", prompt: "Welcome! Before we dive into your resume, I like testing sharp thinking—ready for a quick scenario or brainteaser?" },
+    { role: "Cross-Cultural Director", pref: "High-Context Attitude", prompt: "How do you handle a tense disagreement when working across different cultural communication styles?" },
+    { role: "Principal AI Researcher", pref: "First-Principles Logic", prompt: "How would you estimate the daily voice queries processed in Dhaka without looking up data?" },
+    { role: "Executive Recruiter", pref: "Ownership & Humor", prompt: "Tell me about a time an assumption failed—how did your attitude turn it around?" }
+  ];
+
+  const flirtScenarios = [
+    { role: "Coffee Shop Bookworm", pref: "Witty & Warm", prompt: "I’ve been staring at the same page for twenty minutes—convince me taking a break to talk to you is a better plot twist." },
+    { role: "Art Gallery Curator", pref: "Subtle & Poetic", prompt: "Most people rush past the quiet pieces here. What caught your eye first?" },
+    { role: "Conference Co-Panelist", pref: "Formal Flirt & Banter", prompt: "That was a surprisingly sharp question you asked during the Q&A. Are you always this good at reading the room?" },
+    { role: "Late-Night Rooftop Musician", pref: "Playful & Spontaneous", prompt: "You look like someone who has a great story behind that smile—am I right?" },
+    { role: "Design Studio Partner", pref: "Smart & Charming", prompt: "We survived a three-hour client workshop. How do you suggest we celebrate without talking about deadlines?" }
+  ];
+
+  const avatars = ["👩‍💼", "👨‍💼", "👩‍💻", "👨‍💻", "👩‍🎨", "🧑‍🚀", "👩‍🔬", "🧑‍🎤", "👩‍🏫", "🧔‍♂️"];
+  const characters = [];
+
+  for (let i = 0; i < 100; i++) {
+    const isCorp = i < 50;
+    const fname = firstNames[i % firstNames.length];
+    const lname = lastNames[Math.floor(i / 10) % lastNames.length];
+    const template = isCorp ? corpRoles[i % corpRoles.length] : flirtScenarios[i % flirtScenarios.length];
+    characters.push({
+      id: i + 1,
+      name: `${fname} ${lname}`,
+      mode: isCorp ? 'interview' : 'flirt',
+      role: template.role,
+      pref: template.pref,
+      prompt: template.prompt,
+      avatar: avatars[i % avatars.length],
+      color: isCorp ? '#3b82f6' : '#ec4899'
+    });
+  }
+
+  function renderCharacters() {
+    const query = document.getElementById('charSearch').value.toLowerCase();
+    const modeFilter = document.getElementById('charModeFilter').value;
+    const grid = document.getElementById('charGrid');
+    grid.innerHTML = '';
+
+    characters
+      .filter(c => (modeFilter === 'all' || c.mode === modeFilter))
+      .filter(c => c.name.toLowerCase().includes(query) || c.role.toLowerCase().includes(query))
+      .forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'char-card';
+        div.onclick = () => startSession(c);
+        div.innerHTML = `
+          <div class="char-top">
+            <div class="char-avatar-mini" style="background:${c.color}22; border:1px solid ${c.color};">${c.avatar}</div>
+            <div>
+              <div class="char-name">#${c.id} ${c.name}</div>
+              <div class="char-role">${c.role}</div>
+            </div>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+            <span class="phrase-tag ${c.mode === 'interview' ? 'tag-corp' : 'tag-flirt-i'}">
+              ${c.mode === 'interview' ? 'ইন্টারভিউ ও ধাঁধা' : 'ফ্লার্ট ও আড্ডা'}
+            </span>
+            <span style="font-size:0.75rem; color:var(--text-muted);">প্রবেশ →</span>
+          </div>
+        `;
+        grid.appendChild(div);
+      });
+  }
+
+  // --- SIMULATION, RIDDLE ENGINE & VISUAL EXPRESSION ---
+  function startSession(char) {
+    currentCharacter = char;
+    impression = 50;
+    turnCount = 0;
+    activeRiddle = null;
+    document.getElementById('riddleBanner').classList.remove('active');
+
+    document.getElementById('activeCharName').innerText = `#${char.id} ${char.name}`;
+    document.getElementById('activeCharRole').innerText = `${char.role} • ${char.mode === 'interview' ? 'Corporate Meet Board' : 'Social Flirt Room'}`;
+    document.getElementById('charPrefTag').innerText = `পছন্দ: ${char.pref}`;
+
+    const badge = document.getElementById('modeBadge');
+    if (char.mode === 'interview') {
+      badge.innerText = '● INTERVIEW & RIDDLE BOARD';
+      badge.style.background = 'rgba(79, 140, 255, 0.2)';
+      badge.style.color = '#93c5fd';
+    } else {
+      badge.innerText = '♥ FLIRT & CHARM ROOM';
+      badge.style.background = 'rgba(236, 72, 153, 0.2)';
+      badge.style.color = '#f9a8d4';
+    }
+
+    setVisualExpression('neutral', 'মনোযোগী ও শান্ত (Neutral)', char.avatar);
+    updateImpressionUI();
+
+    const chat = document.getElementById('chatMessages');
+    chat.innerHTML = '';
+    appendMsg('ai', char.prompt, 'শুরুর বার্তা');
+    renderQuickSuggestions(char);
+    switchTab('meet', document.querySelectorAll('.nav-btn')[2]);
+  }
+
+  function renderQuickSuggestions(char) {
+    const box = document.getElementById('quickReplies');
+    box.innerHTML = '<div style="font-size:0.74rem; color:var(--text-muted);">স্মার্ট সাজেশন (ক্লিক করলে সরাসরি পাঠানো হবে):</div>';
+    const pool = char.mode === 'interview'
+      ? [phrases[0], phrases[2], phrases[9]]
+      : [phrases[5], phrases[7], phrases[9]];
+
+    pool.forEach(p => {
+      const b = document.createElement('button');
+      b.className = 'quick-btn';
+      b.innerText = `✨ [${p.tag}] "${p.en}"`;
+      b.onclick = () => {
+        document.getElementById('userInput').value = p.en;
+        sendMessage();
+      };
+      box.appendChild(b);
+    });
+  }
+
+  function triggerRiddle(manual = false) {
+    const randomRiddle = interviewRiddles[Math.floor(Math.random() * interviewRiddles.length)];
+    activeRiddle = randomRiddle;
+
+    const banner = document.getElementById('riddleBanner');
+    document.getElementById('riddleQuestionText').innerText = randomRiddle.q;
+    banner.classList.add('active');
+
+    setVisualExpression('skeptical', 'চ্যালেঞ্জিং মুড — ধাঁধা ছুড়ে দিয়েছে! (Brainteaser)', currentCharacter.avatar);
+    appendMsg(
+      'riddle',
+      `🧩 <strong>সারপ্রাইজ ধাঁধা:</strong> ${randomRiddle.q}`,
+      manual ? 'আপনার অনুরোধে ধাঁধা দেওয়া হলো • সঠিক উত্তরে +৩০ কয়েন' : 'ইন্টারভিউ বোর্ডের আকস্মিক বুদ্ধির পরীক্ষা!'
+    );
+  }
+
+  function showRiddleHint() {
+    if (!activeRiddle) return;
+    appendMsg('ai', `💡 <strong>হিন্ট:</strong> ${activeRiddle.hint}`, 'হিন্ট নেওয়া হয়েছে');
+  }
+
+  function setVisualExpression(state, label, baseAvatar) {
+    const ring = document.getElementById('avatarRing');
+    const emojiEl = document.getElementById('expressionEmoji');
+    const textEl = document.getElementById('expressionText');
+
+    ring.className = 'avatar-ring ' + state;
+    const faceMap = {
+      neutral: baseAvatar || '🙂',
+      impressed: '🤩👏',
+      blushing: '😊💖',
+      laughing: '😂✨',
+      skeptical: '🤨',
+      annoyed: '😒'
+    };
+    emojiEl.innerText = faceMap[state] || '🙂';
+    textEl.innerText = `এক্সপ্রেশন: ${label}`;
+  }
+
+  function updateImpressionUI() {
+    impression = Math.max(0, Math.min(100, impression));
+    document.getElementById('impressionScoreText').innerText = impression + '%';
+    document.getElementById('impressionBar').style.width = impression + '%';
+  }
+
+  function appendMsg(sender, text, meta = '') {
+    const chat = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    if (sender === 'user') div.className = 'msg msg-user';
+    else if (sender === 'riddle') div.className = 'msg msg-riddle';
+    else div.className = 'msg msg-ai';
+
+    div.innerHTML = `${text}${meta ? `<span class="msg-meta">${meta}</span>` : ''}`;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function sendMessage() {
+    const input = document.getElementById('userInput');
+    const text = input.value.trim();
+    if (!text) return;
+    if (!currentCharacter) startSession(characters[0]);
+
+    appendMsg('user', text);
+    input.value = '';
+    turnCount++;
+
+    evaluateResponse(text);
+  }
+
+  function evaluateResponse(text) {
+    const lower = text.toLowerCase();
+
+    // 1. Check if an Active Riddle is being answered
+    if (activeRiddle) {
+      const solved = activeRiddle.keywords.some(k => lower.includes(k));
+      if (solved) {
+        riddlesSolved++;
+        streak++;
+        impression += 22;
+        setVisualExpression('impressed', 'অভিভূত! ধাঁধার সঠিক সমাধান (Brilliant!)', currentCharacter.avatar);
+        updateImpressionUI();
+        saveAndRenderHUD(30, 'ধাঁধা সমাধানের বোনাস!');
+        appendMsg(
+          'ai',
+          `চমৎকার যুক্তি! একদম সঠিক সমাধান দিয়েছেন।<br><small style="color:#93c5fd;">ব্যাখ্যা: ${activeRiddle.solution}</small>`,
+          'ধাঁধা জয়ী • +৩০ কয়েন'
+        );
+        activeRiddle = null;
+        document.getElementById('riddleBanner').classList.remove('active');
+        return;
+      } else if (lower.includes('pass') || lower.includes('skip') || lower.includes('জানি না')) {
+        streak = 0;
+        impression -= 8;
+        setVisualExpression('skeptical', 'হতাশ — ধাঁধাটি স্কিপ করলেন', currentCharacter.avatar);
+        updateImpressionUI();
+        saveAndRenderHUD(-10, 'ধাঁধা স্কিপ করা হয়েছে');
+        appendMsg('ai', `কোনো সমস্যা নেই, তবে ইন্টারভিউতে হাল ছাড়লে চলবে না! সঠিক উত্তর ছিল: ${activeRiddle.solution}`, '-১০ কয়েন');
+        activeRiddle = null;
+        document.getElementById('riddleBanner').classList.remove('active');
+        return;
+      } else {
+        streak = 0;
+        impression -= 6;
+        setVisualExpression('skeptical', 'আরেকটু ভাবুন — উত্তরটি পুরোপুরি মেলেনি', currentCharacter.avatar);
+        updateImpressionUI();
+        saveAndRenderHUD(-5, 'আরেকবার চেষ্টা করুন');
+        appendMsg('ai', `হুম, কাছাকাছি যাচ্ছেন কিন্তু মূল লজিকটি এখনো আসেনি! হিন্ট: ${activeRiddle.hint}`, 'আবার চেষ্টা করুন বা "skip" লিখুন');
+        return;
+      }
+    }
+
+    // 2. Normal Conversation / Attitude / Flirt / Humor Evaluation
+    const isInterview = currentCharacter.mode === 'interview';
+    const corpKeywords = ['nuanced', 'structure', 'assumption', 'alignment', 'bottleneck', 'stakeholder', 'trade-off', 'story', 'clarify', 'norms', 'break it down', 'যুক্তি', 'সমাধান', 'টিম'];
+    const attitudeKeywords = ['ownership', 'disagree', 'shared goal', 'listening', 'recovery', 'accountable', 'respect', 'দায়িত্ব', 'সম্মান', 'শান্ত'];
+    const flirtKeywords = ['refreshing', 'smile', 'vibe', 'entertaining', 'meetings', 'afternoon', 'eye', 'charming', 'হাসি', 'ভালো লাগছে', 'সুন্দর', 'দারুণ'];
+    const humorKeywords = ['coffee', 'spreadsheet', 'joke', 'haha', 'plot twist', 'laugh', 'কফি', 'মজা', 'হাসি'];
+    const rudeOrWeak = ['idk', 'dont know', 'whatever', 'boring', 'shut up', 'stupid', 'ধুর', 'বিরক্তিকর'];
+
+    let coinDelta = 0;
+    let reply = '';
+    let state = 'neutral';
+    let expLabel = 'পর্যবেক্ষণ করছে';
+
+    if (rudeOrWeak.some(w => lower.includes(w)) || text.length < 4) {
+      coinDelta = -15;
+      streak = 0;
+      impression -= 18;
+      state = 'annoyed';
+      expLabel = 'অসন্তুষ্ট ও বিমুখ (Unimpressed)';
+      reply = isInterview
+        ? "That attitude won’t fly in a professional boardroom. Take a breath and reframe your point constructively."
+        : "Ouch, that killed the mood instantly. Want to try again with a bit more warmth?";
+    } else if (humorKeywords.some(k => lower.includes(k))) {
+      coinDelta = 20;
+      streak++;
+      charmScore += 10;
+      impression += 15;
+      state = 'laughing';
+      expLabel = 'হেসে ফেলেছে — দারুণ রসবোধ! (Amused & Laughing)';
+      reply = isInterview
+        ? "Haha, I appreciate the wit! Keeping humor alive under pressure is a great sign. Now let's apply that sharp mind to our next challenge."
+        : "Okay, you actually made me laugh out loud! Your sense of humor is easily your best charm.";
+    } else if (isInterview) {
+      const corpHits = corpKeywords.filter(k => lower.includes(k)).length;
+      const attHits = attitudeKeywords.filter(k => lower.includes(k)).length;
+      const flirtHits = flirtKeywords.filter(k => lower.includes(k)).length;
+
+      if (attHits > 0) {
+        coinDelta = 28;
+        streak++;
+        profScore += 15;
+        impression += 20;
+        state = 'impressed';
+        expLabel = 'মুগ্ধ! চমৎকার প্রোফেশনাল এটিচিউড (Leadership Mindset)';
+        reply = "That level of ownership and emotional maturity is rare. Hiring managers look for this exact attitude before technical trivia.";
+      } else if (corpHits > 0) {
+        coinDelta = 25;
+        streak++;
+        profScore += 12;
+        impression += 18;
+        state = 'impressed';
+        expLabel = 'অত্যন্ত প্রভাবিত (Impressed)';
+        reply = "Clean, structured framing! You broke down the ambiguity like a seasoned strategist.";
+      } else if (flirtHits > 0 && lower.includes('meetings')) {
+        coinDelta = 15;
+        streak++;
+        charmScore += 8;
+        impression += 10;
+        state = 'blushing';
+        expLabel = 'হালকা হাসি ও প্রশংসা (Subtle Charm)';
+        reply = "Smooth—just the right amount of polite charm without crossing professional boundaries!";
+      } else if (flirtHits > 0) {
+        coinDelta = -10;
+        streak = 0;
+        impression -= 12;
+        state = 'skeptical';
+        expLabel = 'ভ্রু কুঁচকে যাচাই করছে (Too Informal for Boardroom)';
+        reply = "Let’s keep the focus professional here—save the casual lines for after hours!";
+      } else {
+        coinDelta = 10;
+        profScore += 5;
+        impression += 6;
+        state = 'neutral';
+        expLabel = 'মনোযোগ দিয়ে শুনছে (Thoughtful)';
+        reply = "Solid point. Adding a concrete example or clear metric will make your answer even stronger.";
+      }
+    } else {
+      // Flirt / Social mode
+      const flirtHits = flirtKeywords.filter(k => lower.includes(k)).length;
+      const corpHits = corpKeywords.filter(k => lower.includes(k)).length;
+
+      if (flirtHits > 0) {
+        coinDelta = 25;
+        streak++;
+        charmScore += 15;
+        impression += 20;
+        state = 'blushing';
+        expLabel = 'মুগ্ধ ও লাজুক হাসি (Charmed & Blushing)';
+        reply = "Okay, I have to give you credit—that was effortlessly smooth. You definitely know how to elevate the vibe!";
+      } else if (corpHits > 0) {
+        coinDelta = -5;
+        streak = 0;
+        impression -= 6;
+        state = 'skeptical';
+        expLabel = 'মজা পেয়ে অবাক (Too Corporate!)';
+        reply = "Wait—are we on a coffee break or in a quarterly board review? Drop the corporate jargon and be yourself!";
+      } else {
+        coinDelta = 12;
+        charmScore += 6;
+        impression += 8;
+        state = 'impressed';
+        expLabel = 'আগ্রহী ও হাস্যোজ্জ্বল (Intrigued)';
+        reply = "I like your genuine energy. Keep going—you’ve definitely got my attention.";
+      }
+    }
+
+    setVisualExpression(state, expLabel, currentCharacter.avatar);
+    updateImpressionUI();
+    saveAndRenderHUD(coinDelta, coinDelta > 0 ? 'দারুণ রিয়েকশন!' : 'টোন ম্যাচ করেনি');
+    appendMsg('ai', reply, `${expLabel} • ${coinDelta > 0 ? '+' + coinDelta : coinDelta} কয়েন`);
+
+    // Randomly pop a surprise riddle every 2nd turn in Interview Board!
+    if (isInterview && turnCount % 2 === 0 && !activeRiddle) {
+      setTimeout(() => triggerRiddle(false), 750);
+    }
+  }
+
+  function sendJokeSpark() {
+    if (!currentCharacter) return;
+    document.getElementById('userInput').value = phrases[9].en;
+    sendMessage();
+  }
+
+  function sendPostureBonus() {
+    if (!currentCharacter) return;
+    document.getElementById('userInput').value = phrases[2].en;
+    sendMessage();
+  }
+
+  function nextCharacter() {
+    if (!currentCharacter) return;
+    const nextChar = characters[(currentCharacter.id) % characters.length];
+    startSession(nextChar);
+  }
+
+  function toggleMic(btn) {
+    const muted = btn.dataset.muted === '1';
+    btn.style.background = muted ? '' : '#ef4444';
+    btn.dataset.muted = muted ? '0' : '1';
+    btn.innerText = muted ? '🎙️ মাইক' : '🔇 মিউট';
+  }
+
+  function switchTab(tabName, btnEl) {
+    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + tabName).classList.add('active');
+    if (btnEl) btnEl.classList.add('active');
+  }
+
+  // Initialize App
+  saveAndRenderHUD(0);
+  renderPhrases('all');
+  renderCharacters();
+  startSession(characters[1]); // Start with Google Hiring Lead who loves riddles & attitude!
+  switchTab('academy', document.querySelectorAll('.nav-btn')[0]);
+</script>
+</body>
+</html>
